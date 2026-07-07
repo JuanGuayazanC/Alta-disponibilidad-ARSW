@@ -344,7 +344,75 @@ standby en otra zona de disponibilidad y conmuta (failover) hacia ella si la
 primaria falla, aplicando el mismo principio de redundancia por zonas que se
 usó aquí para la capa web.
 
-## 5. Tabla de validación arquitectónica
+## 5. Glosario de servicios y conceptos mencionados
+
+> Referencia rápida de cada servicio/concepto de AWS que aparece en este
+> documento (especialmente en la Actividad 4), para no tener que recordarlos
+> de memoria.
+
+**Application Load Balancer (ALB)**
+Balanceador de carga de capa 7 (HTTP/HTTPS). Recibe las peticiones de los
+usuarios en un único DNS público y las distribuye entre los targets sanos de
+uno o más Target Groups. Es el componente `alb-ha-web` de este laboratorio.
+
+**Target Group**
+Conjunto de destinos (instancias EC2, IPs, funciones Lambda, etc.) a los que
+un ALB o NLB puede enviar tráfico. Mantiene el estado de salud de cada
+destino mediante health checks. Es el componente `tg-ha-web`.
+
+**Health Check**
+Verificación periódica (por ejemplo `GET /health`) que hace el Target Group a
+cada destino para decidir si está en condiciones de recibir tráfico.
+
+**Security Group**
+Firewall virtual a nivel de instancia/interfaz de red. Filtra tráfico de
+entrada y salida mediante reglas que pueden tener como origen/destino una IP,
+un rango CIDR, u otro Security Group.
+
+**Launch Template**
+Plantilla que define cómo debe lanzarse una instancia EC2 (AMI, tipo de
+instancia, Security Groups, User Data, etc.), para que un Auto Scaling Group
+pueda crear instancias idénticas automáticamente.
+
+**Auto Scaling Group (ASG)**
+Servicio que mantiene automáticamente un número deseado de instancias EC2
+(usando un Launch Template), reemplazando las que fallen y pudiendo escalar
+hacia arriba/abajo según demanda o políticas configuradas. Se integra con los
+health checks del ALB para saber qué instancias reemplazar.
+
+**NAT Gateway**
+Recurso que permite a instancias en subredes **privadas** (sin IP pública)
+salir a Internet (por ejemplo, para descargar paquetes), sin permitir que
+tráfico entrante desde Internet llegue directamente a ellas.
+
+**AWS Certificate Manager (ACM)**
+Servicio que emite y renueva automáticamente certificados TLS/SSL gratuitos,
+usados para habilitar HTTPS en un ALB sin tener que gestionar certificados
+manualmente.
+
+**Amazon CloudWatch**
+Servicio de métricas y monitoreo de AWS: recolecta métricas como latencia,
+número de peticiones, o cantidad de targets healthy/unhealthy, y permite
+crear alarmas sobre ellas.
+
+**Access Logs (del ALB, hacia S3)**
+Registro detallado de cada petición HTTP que procesa el ALB (IP de origen,
+target que la atendió, código de respuesta, latencia, etc.), almacenado como
+archivos en un bucket de Amazon S3 para su posterior análisis.
+
+**Rolling deployment**
+Estrategia de despliegue que reemplaza las instancias de una en una (o en
+pequeños lotes): se lanza la nueva versión, se espera a que el health check la
+marque *Healthy*, y solo entonces se retira la instancia vieja equivalente.
+Evita caídas de servicio durante una actualización.
+
+**Amazon RDS Multi-AZ**
+Modo de Amazon RDS (bases de datos relacionales administradas) que mantiene
+una réplica *standby* sincronizada en otra zona de disponibilidad y conmuta
+automáticamente (failover) hacia ella si la instancia primaria falla — el
+mismo principio de redundancia por zonas aplicado a la capa de datos.
+
+## 6. Tabla de validación arquitectónica
 
 | Elemento | Función en la arquitectura |
 |---|---|
@@ -357,7 +425,7 @@ usó aquí para la capa web.
 | Security Group de EC2 (`ec2-ha-sg`) | Restringe el acceso a las instancias para que solo acepten tráfico HTTP proveniente del Security Group del ALB (`alb-ha-sg`), evitando que alguien pueda saltarse el balanceador y golpear las instancias directamente. |
 | Zonas de disponibilidad (us-east-1a, us-east-1f) | Distribuyen físicamente las instancias y el propio ALB en centros de datos independientes, de modo que la caída completa de una zona no deja indisponible al sistema. |
 
-## 6. Cómo reproducir este laboratorio
+## 7. Cómo reproducir este laboratorio
 
 1. Crear los Security Groups `sg-alb-ha` y `sg-ec2-ha` (ver sección 3.2).
 2. Lanzar dos instancias EC2 (`web-ha-a`, `web-ha-b`) en zonas de disponibilidad
@@ -367,9 +435,9 @@ usó aquí para la capa web.
    instancias.
 4. Crear el Application Load Balancer `alb-ha-web` apuntando al Target Group.
 5. Verificar balanceo, simular falla de una instancia y validar recuperación.
-6. Eliminar todos los recursos al finalizar (ver sección 7).
+6. Eliminar todos los recursos al finalizar (ver sección 8).
 
-## 7. Limpieza de recursos
+## 8. Limpieza de recursos
 
 Al finalizar, eliminar en este orden: Application Load Balancer → Target Group →
 Instancias EC2 → Security Groups. *Estado: pendiente.*
