@@ -445,92 +445,92 @@ guía). Los archivos originales están en [evidencias/](evidencias/).
 
 ### Preparación inicial
 
-![Página de inicio de AWS Academy](evidencias/01-preparacion-aws-academy-inicio.png)
+![Página de inicio de AWS Academy](evidencias/aws-academy-home.png)
 *Página de inicio del curso en AWS Academy.*
 
-![Learner Lab iniciado](evidencias/02-preparacion-learner-lab-iniciado.png)
+![Learner Lab iniciado](evidencias/learner-lab-started.png)
 *Learner Lab iniciado (punto verde, timer corriendo).*
 
-![Consola de AWS, región us-east-1](evidencias/03-preparacion-consola-region-us-east-1.png)
+![Consola de AWS, región us-east-1](evidencias/aws-console-region.png)
 *Consola de AWS abierta, región us-east-1 confirmada.*
 
 ### Security Groups
 
-![Reglas de alb-ha-sg](evidencias/04-security-group-alb-ha-sg-reglas.png)
+![Reglas de alb-ha-sg](evidencias/alb-security-group-rules.png)
 *Reglas de entrada/salida configuradas para `alb-ha-sg`.*
 
-![Error de nombre con prefijo sg-](evidencias/05-security-group-error-nombre-prefijo-sg.png)
+![Error de nombre con prefijo sg-](evidencias/security-group-name-error.png)
 *Error de AWS al intentar nombrar el grupo `sg-alb-ha` (desviación documentada
 en la sección 3.2).*
 
-![Security Groups creados](evidencias/06-security-groups-alb-y-ec2-creados.png)
+![Security Groups creados](evidencias/security-groups-created.png)
 *Los tres Security Groups existentes: `default`, `alb-ha-sg`, `ec2-ha-sg`.*
 
 ### Instancias EC2
 
-![Par de claves ARSW](evidencias/07-ec2-key-pair-arsw.png)
+![Par de claves ARSW](evidencias/ec2-key-pair-created.png)
 *Creación del par de claves `ARSW`.*
 
-![Selección de subred para instancia A](evidencias/08-ec2-instancia-a-seleccion-subred.png)
+![Selección de subred para instancia A](evidencias/instance-a-subnet-selection.png)
 *Selección de subred/AZ para `web-ha-a`.*
 
-![Configuración de red de instancia B](evidencias/09-ec2-instancia-b-red-y-security-group.png)
+![Configuración de red de instancia B](evidencias/instance-b-network-config.png)
 *Configuración de red para `web-ha-b`, corrigiendo el Security Group.*
 
-![Perfil de instancia de IAM en Ninguno](evidencias/10-ec2-perfil-iam-ninguno.png)
+![Perfil de instancia de IAM en Ninguno](evidencias/instance-iam-profile-none.png)
 *Perfil de instancia de IAM dejado en "Ninguno".*
 
 **Evidencia requerida — dos instancias EC2 en ejecución (punto 2 del Reto final):**
 
-![Instancias web-ha-a y web-ha-b en ejecución](evidencias/11-ec2-instancias-web-ha-a-y-b-en-ejecucion.png)
+![Instancias web-ha-a y web-ha-b en ejecución](evidencias/ec2-instances-running.png)
 
-![Prueba directa bloqueada por el Security Group](evidencias/12-prueba-directa-bloqueada-por-security-group.png)
+![Prueba directa bloqueada por el Security Group](evidencias/direct-access-blocked.png)
 *Prueba directa por IP bloqueada antes de crear el ALB (inconsistencia
 documentada en la sección 3.3).*
 
-![Respuesta directa de la instancia A](evidencias/13-verificacion-instancia-a-respuesta.png)
+![Respuesta directa de la instancia A](evidencias/instance-a-response.png)
 *Respuesta directa de la instancia A.*
 
-![Respuesta directa de la instancia B](evidencias/14-verificacion-instancia-b-respuesta.png)
+![Respuesta directa de la instancia B](evidencias/instance-b-response.png)
 *Respuesta directa de la instancia B.*
 
-![Health check de instancia A en OK](evidencias/15-verificacion-instancia-a-health-ok.png)
+![Health check de instancia A en OK](evidencias/instance-a-health-check-ok.png)
 *Health check `/health` de la instancia A → `OK`.*
 
-![Health check de instancia B en OK](evidencias/16-verificacion-instancia-b-health-ok.png)
+![Health check de instancia B en OK](evidencias/instance-b-health-check-ok.png)
 *Health check `/health` de la instancia B → `OK`.*
 
 ### Target Group y Application Load Balancer
 
 **Evidencia requerida — Target Group creado (punto 3 del Reto final):**
 
-![Target Group tg-ha-web creado](evidencias/17-target-group-tg-ha-web-creado.png)
+![Target Group tg-ha-web creado](evidencias/target-group-created.png)
 
 **Evidencia requerida — Application Load Balancer creado (punto 4 del Reto final):**
 
-![Application Load Balancer alb-ha-web creado](evidencias/18-application-load-balancer-alb-ha-web-creado.png)
+![Application Load Balancer alb-ha-web creado](evidencias/load-balancer-created.png)
 
 **Evidencia requerida — Target Group con ambos destinos Healthy (punto 3 del Reto final):**
 
-![Target Group con destinos Healthy](evidencias/19-target-group-destinos-healthy.png)
+![Target Group con destinos Healthy](evidencias/target-group-healthy-targets.png)
 
 ### Balanceo de carga
 
 **Evidencia requerida — respuesta desde instancia B vía ALB (punto 6 del Reto final):**
 
-![Respuesta de instancia B a través del ALB](evidencias/20-alb-balanceo-respuesta-instancia-b.png)
+![Respuesta de instancia B a través del ALB](evidencias/load-balancer-response-instance-b.png)
 
 **Evidencia requerida — respuesta desde instancia A vía ALB (punto 5 del Reto final):**
 
-![Respuesta de instancia A a través del ALB](evidencias/21-alb-balanceo-respuesta-instancia-a.png)
+![Respuesta de instancia A a través del ALB](evidencias/load-balancer-response-instance-a.png)
 
 ### Simulación de falla y recuperación
 
 **Evidencia requerida — falla simulada (punto 7 del Reto final):**
 
-![Target Group con web-ha-a Unused tras la falla simulada](evidencias/22-falla-simulada-web-ha-a-unused.png)
+![Target Group con web-ha-a Unused tras la falla simulada](evidencias/simulated-failure-instance-a-unused.png)
 
-![Recuperación: ambas instancias Healthy](evidencias/23-recuperacion-ambas-instancias-healthy.png)
+![Recuperación: ambas instancias Healthy](evidencias/recovery-both-instances-healthy.png)
 *Recuperación: ambas instancias de vuelta en Healthy tras reiniciar `web-ha-a`.*
 
 ## 9. Limpieza de recursos
