@@ -539,5 +539,22 @@ in section 3.3).*
 
 ## 9. Resource cleanup
 
-When finished, delete resources in this order: Application Load Balancer →
-Target Group → EC2 instances → Security Groups. *Status: pending.*
+Resources were deleted in this order to avoid dependency errors (a Target
+Group can't be deleted while an ALB still references it, and a Security
+Group can't be deleted while another one still references it as a source):
+
+1. **Application Load Balancer** `alb-ha-web` — deleted.
+2. **Target Group** `tg-ha-web` — deleted.
+3. **EC2 instances** `web-ha-a` and `web-ha-b` — terminated.
+4. **Security Groups** `ec2-ha-sg` (deleted first, since it referenced
+   `alb-ha-sg`) and `alb-ha-sg` — both deleted.
+
+**Status: complete.** No billable resources remain from this lab.
+
+> **Note — session interruption during cleanup:** midway through deleting the
+> Security Groups, the AWS Academy Learner Lab session expired (the default
+> 4-hour session limit), which caused AWS to attach a temporary explicit-deny
+> policy (`voc-cancel-cred`) blocking all EC2 API calls, including read-only
+> `Describe*` operations. This was not caused by anything done in this lab —
+> restarting the Learner Lab session (**Start Lab** again) restored access,
+> and the remaining Security Groups were deleted normally afterward.
