@@ -158,11 +158,46 @@ guía ([scripts/user-data-web-ha-a.sh](scripts/user-data-web-ha-a.sh) y
 
 ### 3.4 Target Group
 
-*Pendiente*
+| Campo | Valor |
+|---|---|
+| Nombre | `tg-ha-web` |
+| ARN | `arn:aws:elasticloadbalancing:us-east-1:959779225953:targetgroup/tg-ha-web/6d97a0b3f3114ee9` |
+| Tipo de destino | Instancia |
+| Protocolo : Puerto | HTTP : 80 |
+| Versión del protocolo | HTTP1 |
+| VPC | `vpc-03ea05e656470d33f` |
+| Health check | HTTP, ruta `/health`, puerto de tráfico, intervalo 15s, timeout 5s, umbral saludable/no saludable 2/2, código de éxito 200 |
+| Destinos registrados | `web-ha-a` (puerto 80), `web-ha-b` (puerto 80) |
+
+Al momento de crear el Target Group, ambos destinos aparecen en estado **"Sin
+utilizar" (Unused)** — es el comportamiento esperado, porque todavía no hay
+ningún Load Balancer asociado que les envíe tráfico. Este estado cambia a
+*Healthy* una vez se crea el ALB (sección 3.5).
 
 ### 3.5 Application Load Balancer
 
-*Pendiente*
+| Campo | Valor |
+|---|---|
+| Nombre | `alb-ha-web` |
+| ARN | `arn:aws:elasticloadbalancing:us-east-1:959779225953:loadbalancer/app/alb-ha-web/2813cfdc0bc6754d` |
+| Esquema | Internet-facing (expuesto a Internet) |
+| DNS | `alb-ha-web-1998376886.us-east-1.elb.amazonaws.com` |
+| VPC | `vpc-03ea05e656470d33f` |
+| Zonas de disponibilidad | us-east-1a (`subnet-05bf2ad6475f1ed23`), us-east-1f (`subnet-03ca05fa311dcaebc`) |
+| Security Group | `alb-ha-sg` |
+| Listener | HTTP : 80 → reenviar a `tg-ha-web` (100%) |
+
+**Verificación (punto 15-16 de la guía):**
+
+- Ambos destinos en `tg-ha-web` pasaron a estado **Healthy** unos minutos después
+  de crear el ALB.
+- Al abrir `http://alb-ha-web-1998376886.us-east-1.elb.amazonaws.com` y
+  recargar varias veces, el ALB alternó las respuestas entre la tarjeta azul
+  (Instancia A) y la tarjeta verde (Instancia B), confirmando el balanceo de
+  carga entre ambas zonas de disponibilidad.
+- Nota: justo después de crear el ALB, la primera petición dio
+  `ERR_TIMED_OUT` porque el balanceador aún estaba en estado
+  "Aprovisionándose"; tras esperar ~1 minuto respondió con normalidad.
 
 ## 4. Actividades de análisis
 
