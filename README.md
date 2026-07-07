@@ -203,15 +203,109 @@ ningún Load Balancer asociado que les envíe tráfico. Este estado cambia a
 
 ### Actividad 1: análisis del balanceo
 
-*Pendiente*
+**¿Qué instancia respondió primero?**
+La instancia B (`i-0b722c2816698d4f5`, us-east-1f), justo después de que el ALB
+terminara de aprovisionarse (el primer intento inmediatamente después de crear
+el ALB dio `ERR_TIMED_OUT` porque aún no estaba listo).
+
+**¿El balanceador alternó entre ambas instancias?**
+Sí. Al recargar varias veces la URL del DNS del ALB, las respuestas alternaron
+entre la tarjeta azul (Instancia A) y la tarjeta verde (Instancia B).
+
+**¿Qué información permite confirmar que hay más de una instancia activa?**
+El `Instance ID` y la `Availability Zone` que muestra cada tarjeta HTML. Si
+fuera una sola instancia, esos valores serían siempre los mismos; al cambiar
+entre `i-06ae96e94534b8e60` (us-east-1a) e `i-0b722c2816698d4f5` (us-east-1f),
+queda demostrado que son dos servidores físicamente distintos.
+
+**¿Qué papel cumple el Target Group?**
+Agrupa los destinos (las instancias EC2), ejecuta los health checks sobre cada
+una y mantiene la lista de cuáles están *Healthy* o *Unhealthy*. El ALB
+consulta esa lista para saber a quién le puede enviar tráfico — el Target
+Group no decide el algoritmo de reparto, pero sí filtra quién es elegible.
+
+**¿Qué papel cumplen los health checks?**
+Verifican periódicamente (cada 15s) que cada instancia responda `OK` en la
+ruta `/health`. Si una instancia falla el chequeo 2 veces seguidas
+(Unhealthy threshold), el Target Group la marca como *Unhealthy* y el ALB dej
+de enviarle tráfico hasta que vuelva a responder correctamente 2 veces
+seguidas (Healthy threshold).
+
+**¿Por qué el usuario no necesita conocer las IP públicas de las instancias?**
+Porque el ALB actúa como una capa de abstracción: el usuario solo interactúa
+con una única dirección estable (el DNS del ALB). Detrás de esa dirección
+puede haber cualquier número de instancias, y estas pueden cambiar (agregarse,
+eliminarse, fallar) sin que el usuario lo note ni tenga que actualizar nada de
+su lado.
 
 ### Actividad 2: análisis de falla
 
-*Pendiente*
+**Simulación realizada:** se detuvo la instancia `web-ha-a` desde
+EC2 → Instancias → Estado de la instancia → Detener instancia.
+
+**¿Qué ocurrió cuando se detuvo la instancia A?**
+En el Target Group `tg-ha-web`, `web-ha-a` pasó de *Healthy* a **"Unused"**,
+con el detalle "Target is in the stopped state" (no a *Unhealthy*, ya que ese
+estado aplica a instancias corriendo que fallan el health check; una instancia
+apagada se clasifica distinto, pero el efecto es el mismo: deja de recibir
+tráfico).
+
+**¿El sistema completo dejó de estar disponible?**
+No. Al probar el DNS del ALB repetidamente, todas las respuestas llegaron
+desde `web-ha-b` (Instancia B) — el servicio siguió disponible sin
+interrupción perceptible para el usuario.
+
+**¿Qué hizo el Load Balancer cuando detectó la falla?**
+Dejó de enviar tráfico a `web-ha-a` y enrutó el 100% de las solicitudes hacia
+`web-ha-b`, el único destino que seguía en estado *Healthy*.
+
+**¿Qué diferencia habría si solo existiera una instancia?**
+Todo el sistema habría quedado caído hasta reiniciar manualmente esa única
+instancia — sería un punto único de falla (single point of failure), como se
+describió en la sección de conceptos base (3.1).
+
+**¿Qué atributo de calidad mejora esta arquitectura?**
+La **disponibilidad**: el sistema sigue respondiendo aunque un componente
+falle, gracias a la redundancia (dos instancias en zonas distintas) y a que el
+ALB puede redirigir el tráfico dinámicamente según el estado de salud de cada
+destino.
 
 ### Actividad 3: análisis de recuperación
 
-*Pendiente*
+**Recuperación realizada:** se inició nuevamente `web-ha-a` desde
+EC2 → Instancias → Estado de la instancia → Iniciar instancia.
+
+**¿Qué ocurrió cuando la instancia A volvió a estar saludable?**
+Tras pasar los status checks, el Target Group volvió a marcar `web-ha-a` como
+*Healthy*, junto a `web-ha-b` (2 destinos en buen estado).
+
+**¿El balanceador volvió a enviarle tráfico?**
+Sí. Al probar el DNS del ALB repetidamente volvieron a aparecer respuestas de
+ambas instancias.
+
+**Observación adicional:** el reparto de tráfico no alterna estrictamente
+A-B-A-B en cada recarga del navegador — a veces varias recargas seguidas
+devuelven la misma instancia. Esto se debe a que el ALB reparte tráfico **por
+conexión HTTP**, no por cada solicitud/clic individual: el navegador reutiliza
+una misma conexión (keep-alive) para varias recargas seguidas, por lo que
+todas esas respuestas provienen del mismo destino hasta que se abre una
+conexión nueva. Esto coincide con lo que la guía anticipa en el punto 25,
+Caso 3 ("El balanceador mantiene afinidad temporal").
+
+**¿Por qué es importante que la recuperación sea automática desde el punto de
+vista del usuario?**
+Porque el usuario nunca tuvo que hacer nada ni fue consciente de la falla ni
+de la recuperación: el sistema se autogestionó a nivel de red (Target Group +
+ALB) sin intervención manual del lado del cliente.
+
+**¿Qué limitaciones tiene esta arquitectura si la instancia no se reinicia
+manualmente?**
+Si nadie reinicia manualmente `web-ha-a` tras una falla real (no una parada
+intencional), esa instancia permanecería fuera de servicio indefinidamente. El
+ALB y el Target Group solo dejan de enviarle tráfico a un destino caído, pero
+no tienen capacidad de reemplazarlo ni de reiniciarlo por sí mismos — esa
+recuperación automática requeriría Auto Scaling (ver sección 22 de la guía),
+que queda fuera del alcance de este laboratorio.
 
 ### Actividad 4: propuesta de mejora hacia producción
 
