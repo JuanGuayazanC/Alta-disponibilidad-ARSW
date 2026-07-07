@@ -87,15 +87,74 @@ Apache HTTPD          Apache HTTPD
 
 ### 3.1 Preparación inicial
 
-- Región asignada: *pendiente*
+- Región asignada: **us-east-1 (US East, N. Virginia)**
 
 ### 3.2 Security Groups
 
-*Pendiente*
+> **Nota — desviación respecto a la guía:** AWS no permite nombres de Security
+> Group que empiecen con el prefijo `sg-`, porque ese prefijo lo reserva AWS para
+> los IDs autogenerados (`sg-0123abcd...`). La guía nombra los grupos `sg-alb-ha`
+> y `sg-ec2-ha`, pero la consola rechaza esos nombres. Se usan en su lugar:
+>
+> | Nombre en la guía | Nombre usado en este laboratorio |
+> |---|---|
+> | `sg-alb-ha` | `alb-ha-sg` |
+> | `sg-ec2-ha` | `ec2-ha-sg` |
+>
+> El resto de la configuración (reglas de entrada/salida, descripciones) se
+> mantiene igual a lo indicado en la guía.
+
+VPC utilizada (VPC predeterminada): `vpc-03ea05e656470d33f`
+
+| Security Group | ID | Regla de entrada | Regla de salida |
+|---|---|---|---|
+| `alb-ha-sg` | `sg-0808e0cd3ade56777` | HTTP (TCP 80) desde `0.0.0.0/0` | All traffic → `0.0.0.0/0` (default) |
+| `ec2-ha-sg` | `sg-0d0cb03db103abeae` | HTTP (TCP 80) desde `alb-ha-sg` | All traffic → `0.0.0.0/0` (default) |
+
+**Por qué `ec2-ha-sg` referencia a `alb-ha-sg` como origen (en vez de una IP):**
+el ALB estará desplegado en dos zonas de disponibilidad, por lo que tiene más de
+una IP y estas pueden cambiar. Referenciar el Security Group del ALB como origen
+significa "acepta tráfico de cualquier recurso que tenga este Security Group
+asociado", sin depender de direcciones IP concretas. Esto también aplica el
+principio de menor privilegio: las instancias EC2 solo aceptan tráfico que pase
+por el ALB, no tráfico directo desde cualquier IP de Internet.
 
 ### 3.3 Instancias EC2
 
-*Pendiente*
+| Instancia | ID | IP pública | Zona de disponibilidad | Security Group |
+|---|---|---|---|---|
+| `web-ha-a` | `i-06ae96e94534b8e60` | `32.192.25.11` | us-east-1a | `ec2-ha-sg` |
+| `web-ha-b` | `i-0b722c2816698d4f5` | `32.192.69.248` | us-east-1f | `ec2-ha-sg` |
+
+Ambas instancias tipo `t3.micro`, par de claves `ARSW` (RSA, `.pem`), sin perfil de
+instancia de IAM, con IP pública habilitada, usando el User Data provisto por la
+guía ([scripts/user-data-web-ha-a.sh](scripts/user-data-web-ha-a.sh) y
+[scripts/user-data-web-ha-b.sh](scripts/user-data-web-ha-b.sh)).
+
+**Verificación (punto 12 de la guía):**
+
+| URL | Resultado |
+|---|---|
+| `http://32.192.25.11` | Tarjeta "Instancia A" con Instance ID y AZ correctos |
+| `http://32.192.69.248` | Tarjeta "Instancia B" con Instance ID y AZ correctos |
+| `http://32.192.25.11/health` | `OK` |
+| `http://32.192.69.248/health` | `OK` |
+
+> **Nota — inconsistencia detectada en la guía:** el punto 12 pide probar la IP
+> pública de cada instancia *antes* de crear el Target Group y el ALB (puntos 13
+> y 14). Sin embargo, la regla de `ec2-ha-sg` configurada en el punto 9 solo
+> permite tráfico HTTP con origen el Security Group `alb-ha-sg`, que en este
+> punto del laboratorio todavía no existe (el ALB no se ha creado). Como
+> resultado, la prueba directa por navegador fallaba con
+> `ERR_CONNECTION_TIMED_OUT` — lo cual en realidad es el comportamiento
+> **correcto** del Security Group, no un error de configuración.
+>
+> **Solución aplicada:** se agregó temporalmente una segunda regla de entrada en
+> `ec2-ha-sg` (HTTP, TCP 80, origen `0.0.0.0/0`, descrita como "TEMPORAL") solo
+> para validar que Apache y `/health` respondían correctamente en cada
+> instancia. Esa regla se elimina inmediatamente después de la verificación,
+> dejando `ec2-ha-sg` únicamente con la regla de origen `alb-ha-sg` antes de
+> continuar con el Target Group.
 
 ### 3.4 Target Group
 
