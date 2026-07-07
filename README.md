@@ -309,20 +309,53 @@ que queda fuera del alcance de este laboratorio.
 
 ### Actividad 4: propuesta de mejora hacia producción
 
-*Pendiente*
+**¿Cómo agregaría recuperación automática?**
+Con un Launch Template + Auto Scaling Group (desired 2, min 2, max 3) apuntando
+al Target Group `tg-ha-web`, usando los health checks del ELB para que el ASG
+reemplace automáticamente cualquier instancia que se reporte como no
+saludable, en vez de depender de un reinicio manual.
+
+**¿Cómo protegería las instancias para que no sean públicas?**
+Colocándolas en subredes privadas, sin IP pública, detrás del ALB (que sigue
+siendo el único componente Internet-facing). Para que puedan seguir
+descargando paquetes del sistema operativo sin exponerse directamente, se
+necesitaría un NAT Gateway en una subred pública.
+
+**¿Cómo agregaría HTTPS?**
+Emitiendo un certificado TLS gratuito con AWS Certificate Manager (ACM) y
+agregando un listener HTTPS (puerto 443) al ALB que referencie ese
+certificado, redirigiendo además el listener HTTP:80 hacia HTTPS.
+
+**¿Cómo registraría logs y métricas?**
+Habilitando Access Logs del ALB hacia un bucket de S3 (detalle de cada
+petición HTTP) y usando Amazon CloudWatch para métricas agregadas (latencia,
+conteo de requests, healthy/unhealthy host count).
+
+**¿Cómo manejaría despliegues sin caída?**
+Con un rolling deployment: reemplazar las instancias del Target Group de a
+poco (o en pequeños lotes) — lanzar la instancia con la versión nueva, esperar
+a que el health check la marque Healthy, y solo entonces retirar la siguiente
+instancia vieja. El ALB siempre mantiene al menos un destino sano recibiendo
+tráfico durante todo el proceso.
+
+**¿Qué componentes agregaría para una base de datos altamente disponible?**
+Amazon RDS en modo Multi-AZ: replica automáticamente los datos a una instancia
+standby en otra zona de disponibilidad y conmuta (failover) hacia ella si la
+primaria falla, aplicando el mismo principio de redundancia por zonas que se
+usó aquí para la capa web.
 
 ## 5. Tabla de validación arquitectónica
 
 | Elemento | Función en la arquitectura |
 |---|---|
-| EC2 instancia A | *Pendiente* |
-| EC2 instancia B | *Pendiente* |
-| Application Load Balancer | *Pendiente* |
-| Target Group | *Pendiente* |
-| Health Check | *Pendiente* |
-| Security Group del ALB | *Pendiente* |
-| Security Group de EC2 | *Pendiente* |
-| Zonas de disponibilidad | *Pendiente* |
+| EC2 instancia A (`web-ha-a`) | Nodo redundante que ejecuta Apache HTTPD y responde tráfico web y health checks; sirve de respaldo/redundancia dentro del Target Group junto a la instancia B. |
+| EC2 instancia B (`web-ha-b`) | Igual que la instancia A: nodo redundante en una zona de disponibilidad distinta, listo para asumir el tráfico si A falla. |
+| Application Load Balancer (`alb-ha-web`) | Recibe las peticiones de los usuarios en un único punto de entrada (DNS público) y las reparte entre las instancias que estén sanas, sin exponer las IPs individuales de cada una. |
+| Target Group (`tg-ha-web`) | Agrupa las instancias EC2 como destinos, ejecuta los health checks sobre cada una y le informa al ALB cuáles están *Healthy* y pueden recibir tráfico. |
+| Health Check (`/health`) | Verifica periódicamente (cada 15s) que cada instancia responda `OK`; tras 2 fallos seguidos la marca *Unhealthy* y dejar de recibir tráfico hasta que se recupere. |
+| Security Group del ALB (`alb-ha-sg`) | Controla el acceso público al balanceador: permite tráfico HTTP (puerto 80) desde cualquier IP de Internet (`0.0.0.0/0`), siendo la única puerta de entrada externa del sistema. |
+| Security Group de EC2 (`ec2-ha-sg`) | Restringe el acceso a las instancias para que solo acepten tráfico HTTP proveniente del Security Group del ALB (`alb-ha-sg`), evitando que alguien pueda saltarse el balanceador y golpear las instancias directamente. |
+| Zonas de disponibilidad (us-east-1a, us-east-1f) | Distribuyen físicamente las instancias y el propio ALB en centros de datos independientes, de modo que la caída completa de una zona no deja indisponible al sistema. |
 
 ## 6. Cómo reproducir este laboratorio
 
