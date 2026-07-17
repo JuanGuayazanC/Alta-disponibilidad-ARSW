@@ -5,6 +5,15 @@ arquitectura básica de alta disponibilidad en AWS Academy Learner Lab usando do
 instancias EC2 en zonas de disponibilidad distintas, un Target Group con health
 checks y un Application Load Balancer.
 
+## Autor
+
+JUAN SEBASTIÁN GUAYAZÁN CLAVIJO  
+Arquitecturas de Software (ISIS ARSW - 101)  
+Decanatura de Ingeniería de Sistemas  
+Ingeniería de Sistemas  
+Escuela Colombiana de Ingeniería Julio Garavito  
+2026-i
+
 ## Estructura del repositorio
 
 ```
