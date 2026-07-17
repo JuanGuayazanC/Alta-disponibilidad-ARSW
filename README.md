@@ -26,6 +26,18 @@ Este laboratorio no se organiza en ejercicios independientes: es un solo flujo d
 trabajo continuo (Security Groups → EC2 → Target Group → ALB → pruebas → simulación
 de falla → limpieza), por lo que toda la documentación vive en este único README.
 
+## Cómo ejecutar
+
+1. Crear los Security Groups `sg-alb-ha` y `sg-ec2-ha` (ver sección 3.2).
+2. Lanzar dos instancias EC2 (`web-ha-a`, `web-ha-b`) en zonas de disponibilidad
+   distintas, usando los scripts de `scripts/user-data-web-ha-a.sh` y
+   `scripts/user-data-web-ha-b.sh` como User Data.
+3. Crear el Target Group `tg-ha-web` con health check en `/health` y registrar ambas
+   instancias.
+4. Crear el Application Load Balancer `alb-ha-web` apuntando al Target Group.
+5. Verificar balanceo, simular falla de una instancia y validar recuperación.
+6. Eliminar todos los recursos al finalizar (ver sección 9).
+
 ## 1. Conceptos base
 
 ### 1.1 Alta disponibilidad
@@ -434,19 +446,7 @@ mismo principio de redundancia por zonas aplicado a la capa de datos.
 | Security Group de EC2 (`ec2-ha-sg`) | Restringe el acceso a las instancias para que solo acepten tráfico HTTP proveniente del Security Group del ALB (`alb-ha-sg`), evitando que alguien pueda saltarse el balanceador y golpear las instancias directamente. |
 | Zonas de disponibilidad (us-east-1a, us-east-1f) | Distribuyen físicamente las instancias y el propio ALB en centros de datos independientes, de modo que la caída completa de una zona no deja indisponible al sistema. |
 
-## 7. Cómo reproducir este laboratorio
-
-1. Crear los Security Groups `sg-alb-ha` y `sg-ec2-ha` (ver sección 3.2).
-2. Lanzar dos instancias EC2 (`web-ha-a`, `web-ha-b`) en zonas de disponibilidad
-   distintas, usando los scripts de `scripts/user-data-web-ha-a.sh` y
-   `scripts/user-data-web-ha-b.sh` como User Data.
-3. Crear el Target Group `tg-ha-web` con health check en `/health` y registrar ambas
-   instancias.
-4. Crear el Application Load Balancer `alb-ha-web` apuntando al Target Group.
-5. Verificar balanceo, simular falla de una instancia y validar recuperación.
-6. Eliminar todos los recursos al finalizar (ver sección 9).
-
-## 8. Evidencias (Reto final)
+## 7. Evidencias (Reto final)
 
 Capturas de pantalla tomadas durante el laboratorio, en el orden en que
 ocurrieron. Cubren los puntos pedidos en el "Reto final" (sección 27 de la
@@ -542,7 +542,7 @@ documentada en la sección 3.3).*
 ![Recuperación: ambas instancias Healthy](docs/images/recovery-both-instances-healthy.png)
 *Recuperación: ambas instancias de vuelta en Healthy tras reiniciar `web-ha-a`.*
 
-## 9. Limpieza de recursos
+## 8. Limpieza de recursos
 
 Al finalizar, eliminar en este orden: Application Load Balancer → Target Group →
 Instancias EC2 → Security Groups. *Estado: pendiente.*
