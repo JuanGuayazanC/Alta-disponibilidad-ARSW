@@ -27,6 +27,20 @@ continuous workflow (Security Groups → EC2 → Target Group → ALB → testin
 failure simulation → cleanup), so all the documentation lives in this single
 README.
 
+## How to Run
+
+1. Create the `sg-alb-ha` and `sg-ec2-ha` Security Groups (see section 3.2).
+2. Launch two EC2 instances (`web-ha-a`, `web-ha-b`) in different
+   availability zones, using `scripts/user-data-web-ha-a.sh` and
+   `scripts/user-data-web-ha-b.sh` as User Data.
+3. Create the `tg-ha-web` Target Group with a health check on `/health` and
+   register both instances.
+4. Create the `alb-ha-web` Application Load Balancer pointing at the Target
+   Group.
+5. Verify load balancing, simulate an instance failure, and validate
+   recovery.
+6. Delete all resources when finished (see section 9).
+
 ## 1. Core concepts
 
 ### 1.1 High availability
@@ -436,21 +450,7 @@ applied here to the data layer.
 | EC2 Security Group (`ec2-ha-sg`) | Restricts access to the instances so they only accept HTTP traffic coming from the ALB's Security Group (`alb-ha-sg`), preventing anyone from bypassing the balancer and hitting the instances directly. |
 | Availability zones (us-east-1a, us-east-1f) | Physically distribute the instances and the ALB itself across independent data centers, so that a complete zone outage does not make the system unavailable. |
 
-## 7. How to reproduce this lab
-
-1. Create the `sg-alb-ha` and `sg-ec2-ha` Security Groups (see section 3.2).
-2. Launch two EC2 instances (`web-ha-a`, `web-ha-b`) in different
-   availability zones, using `scripts/user-data-web-ha-a.sh` and
-   `scripts/user-data-web-ha-b.sh` as User Data.
-3. Create the `tg-ha-web` Target Group with a health check on `/health` and
-   register both instances.
-4. Create the `alb-ha-web` Application Load Balancer pointing at the Target
-   Group.
-5. Verify load balancing, simulate an instance failure, and validate
-   recovery.
-6. Delete all resources when finished (see section 9).
-
-## 8. Evidence (Final Challenge)
+## 7. Evidence (Final Challenge)
 
 Screenshots taken during the lab, in the order they occurred. They cover the
 points requested in the guide's "Final Challenge" (section 27). The original
@@ -546,7 +546,7 @@ in section 3.3).*
 ![Recovery: both instances Healthy](docs/images/recovery-both-instances-healthy.png)
 *Recovery: both instances back to Healthy after restarting `web-ha-a`.*
 
-## 9. Resource cleanup
+## 8. Resource cleanup
 
 Resources were deleted in this order to avoid dependency errors (a Target
 Group can't be deleted while an ALB still references it, and a Security
