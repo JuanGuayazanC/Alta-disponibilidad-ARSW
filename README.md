@@ -5,6 +5,15 @@ high-availability architecture on AWS Academy Learner Lab using two EC2
 instances in different availability zones, a Target Group with health checks,
 and an Application Load Balancer.
 
+## Author
+
+JUAN SEBASTIÁN GUAYAZÁN CLAVIJO  
+Software Architectures (ISIS ARSW - 101)  
+Dean's Office of Systems Engineering  
+Systems Engineering  
+Colombian School of Engineering Julio Garavito  
+2026-i
+
 ## Repository structure
 
 ```
