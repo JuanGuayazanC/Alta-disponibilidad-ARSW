@@ -28,6 +28,17 @@ de falla → limpieza), por lo que toda la documentación vive en este único RE
 
 ## Cómo ejecutar
 
+Primero clona el repositorio — los scripts de User Data referenciados abajo viven
+en `scripts/`, y esta rama tiene el informe completo del laboratorio:
+
+```bash
+git clone https://github.com/JuanGuayazanC/Alta-disponibilidad-ARSW.git
+cd Alta-disponibilidad-ARSW
+git checkout develop-es
+```
+
+Luego, en la consola de AWS:
+
 1. Crear los Security Groups `sg-alb-ha` y `sg-ec2-ha` (ver sección 3.2).
 2. Lanzar dos instancias EC2 (`web-ha-a`, `web-ha-b`) en zonas de disponibilidad
    distintas, usando los scripts de `scripts/user-data-web-ha-a.sh` y
