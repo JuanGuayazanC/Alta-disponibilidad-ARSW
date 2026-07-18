@@ -29,6 +29,17 @@ README.
 
 ## How to Run
 
+Clone the repository first — the User Data scripts referenced below live in
+`scripts/`, and this branch has the full lab report:
+
+```bash
+git clone https://github.com/JuanGuayazanC/Alta-disponibilidad-ARSW.git
+cd Alta-disponibilidad-ARSW
+git checkout develop
+```
+
+Then, in the AWS Console:
+
 1. Create the `sg-alb-ha` and `sg-ec2-ha` Security Groups (see section 3.2).
 2. Launch two EC2 instances (`web-ha-a`, `web-ha-b`) in different
    availability zones, using `scripts/user-data-web-ha-a.sh` and
